@@ -260,6 +260,7 @@ class PlanningAgent:
             "send_itinerary": send_itinerary
         }
         self.execution_history = []
+        self.step_timings = []
     
     def execute_goal(self, goal, context=None):
         """
@@ -286,6 +287,9 @@ class PlanningAgent:
         total_steps = len(plan['steps'])
         
         for i, step in enumerate(plan['steps'], 1):
+            import time
+            step_start = time.time()
+            
             print(f"\n┌─ STEP {i}/{total_steps}: {step['description']}")
             
             # REASONING: Think about this step
@@ -313,6 +317,9 @@ class PlanningAgent:
                 
                 results.append(result)
             
+            step_elapsed = time.time() - step_start
+            self.step_timings.append({"step": step['description'], "time": step_elapsed})
+            print(f"│  ⏱️  Execution time: {step_elapsed:.3f}s")
             print(f"└─ Step {i} complete!\n")
         
         # STEP 3: SUMMARY
@@ -381,6 +388,14 @@ class PlanningAgent:
         
         reasoning_summary = self.reasoning_engine.get_reasoning_summary()
         print(f"Decisions made: {reasoning_summary['total_decisions']}")
+        
+        # Show step timing performance
+        if self.step_timings:
+            print(f"\n⚡ Step Performance:")
+            total_time = sum(t["time"] for t in self.step_timings)
+            for timing in self.step_timings:
+                print(f"  • {timing['step']}: {timing['time']:.3f}s")
+            print(f"  • Total execution time: {total_time:.3f}s")
         
         if all(r.get('success', False) for r in results):
             print("\n✅ GOAL ACHIEVED! All steps completed successfully.")
