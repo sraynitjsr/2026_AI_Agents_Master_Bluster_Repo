@@ -169,6 +169,7 @@ class BaseAgent:
             "tasks_completed": []
         }
         self.tools = {}
+        self.communication_log = []
     
     def remember(self, key, value):
         """Store information in memory"""
@@ -184,12 +185,25 @@ class BaseAgent:
     
     def log_interaction(self, other_agent, message, response):
         """Log communication with other agents"""
-        self.memory["interactions"].append({
+        interaction = {
             "with": other_agent,
             "message": message,
             "response": response,
             "timestamp": datetime.now()
-        })
+        }
+        self.memory["interactions"].append(interaction)
+        self.communication_log.append(interaction)
+    
+    def send_message(self, target_agent, message):
+        """Send a message to another agent"""
+        comm_entry = {
+            "from": self.name,
+            "to": target_agent,
+            "message": message,
+            "timestamp": datetime.now()
+        }
+        self.communication_log.append(comm_entry)
+        return comm_entry
     
     def get_status(self):
         """Return agent status"""
@@ -437,6 +451,12 @@ class CoordinatorAgent(BaseAgent):
                     shared_context['is_revision'] = True
                     shared_context['final_content'] = result.get('content', '')
                 
+                # Log inter-agent communication
+                if task['id'] > 1:
+                    prev_agent = results.get(task['id'] - 1, {}).get('agent', 'Unknown')
+                    if prev_agent != agent_name:
+                        agent.send_message(agent_name, f"Passing context from {prev_agent}")
+                
                 print(f"└─ Task {task['id']} completed by {agent_name}!\n")
             else:
                 print(f"└─ ❌ Agent {agent_name} not found!\n")
@@ -491,6 +511,12 @@ class CoordinatorAgent(BaseAgent):
             print(f"  • Tasks completed: {status['tasks_completed']}")
             print(f"  • Knowledge items: {status['knowledge_items']}")
             print(f"  • Interactions: {status['interactions']}")
+            print(f"  • Communications sent: {len(agent.communication_log)}")
+        
+        print(f"\n📡 Inter-Agent Communication Log:")
+        total_comms = sum(len(agent.communication_log) for agent in self.agents.values())
+        print(f"  • Total messages exchanged: {total_comms}")
+        print(f"  • Collaboration enabled seamless workflow!")
         
         print(f"\n{'='*70}\n")
 
