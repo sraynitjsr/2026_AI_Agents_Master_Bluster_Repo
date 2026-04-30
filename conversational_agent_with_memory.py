@@ -76,6 +76,24 @@ class ConversationMemory:
             "entities_remembered": len(self.entities_mentioned),
             "conversation_start": self.messages[0]["timestamp"] if self.messages else None
         }
+    
+    def export_memory(self, filename="conversation_memory.json"):
+        """Export memory to file for persistence"""
+        import json
+        memory_data = {
+            "messages": [
+                {
+                    "role": m["role"],
+                    "content": m["content"],
+                    "timestamp": m["timestamp"].isoformat()
+                } for m in self.messages
+            ],
+            "entities": self.entities_mentioned,
+            "preferences": self.user_preferences
+        }
+        with open(filename, 'w') as f:
+            json.dump(memory_data, f, indent=2)
+        return f"✓ Memory exported to {filename}"
 
 
 # ============================================
@@ -328,8 +346,16 @@ if __name__ == "__main__":
     # Show what agent remembers
     agent.show_memory_stats()
     
+    # Export memory to file
+    print("\n💾 MEMORY PERSISTENCE DEMO:")
+    print("="*60)
+    export_result = agent.memory.export_memory("demo_conversation.json")
+    print(f"  {export_result}")
+    print("  Now conversations can be saved and restored later!")
+    print("="*60)
+    
     # Show conversation history
-    print("💬 FULL CONVERSATION HISTORY:")
+    print("\n💬 FULL CONVERSATION HISTORY:")
     print("="*60)
     for i, msg in enumerate(agent.memory.messages, 1):
         role_emoji = "👤" if msg["role"] == "user" else "🤖"
