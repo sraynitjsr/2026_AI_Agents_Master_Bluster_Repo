@@ -112,9 +112,13 @@ class SimpleAgent:
     def __init__(self):
         self.brain = SimpleBrain()
         self.conversation_history = []
+        self.performance_metrics = {"total_time": 0, "interactions": 0}
     
     def run(self, user_message):
         """Main agent loop"""
+        import time
+        start_time = time.time()
+        
         print(f"\n{'='*60}")
         print(f"🤔 User: {user_message}")
         print(f"{'='*60}")
@@ -145,12 +149,19 @@ class SimpleAgent:
         print(f"\n✅ Agent: {response}")
         print(f"{'='*60}\n")
         
+        # Track performance
+        elapsed_time = time.time() - start_time
+        self.performance_metrics["total_time"] += elapsed_time
+        self.performance_metrics["interactions"] += 1
+        print(f"⏱️  Response time: {elapsed_time:.3f}s")
+        
         # Save to history
         self.conversation_history.append({
             "user": user_message,
             "action": action,
             "result": tool_result,
-            "response": response
+            "response": response,
+            "response_time": elapsed_time
         })
         
         return response
@@ -247,6 +258,12 @@ if __name__ == "__main__":
     
     for tool, count in tool_usage.items():
         print(f"  • {tool}: {count} times")
+    
+    # Show performance metrics
+    print("\n⚡ Performance Metrics:")
+    avg_time = agent.performance_metrics["total_time"] / agent.performance_metrics["interactions"]
+    print(f"  • Average response time: {avg_time:.3f}s")
+    print(f"  • Total processing time: {agent.performance_metrics['total_time']:.3f}s")
     
     print("\n" + "="*60)
     print("\n💡 KEY TAKEAWAY:")
